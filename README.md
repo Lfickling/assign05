@@ -19,14 +19,19 @@ means you will put specific values in for the 'xyz' shown below that you think
 will allow your function to return the tour with the lowest cost or distance. 
 
 * __TSPwGenAlgo(W, max_num_generations=xyz, population_size=xyz, mutation_rate=xyz, explore_rate=xyz)__
-  * input: an adjacency weight matrix, maximum number of generations, population
-    size to use, mutation rate, and exploration rate (e.g. a smaller exploration rate
-    could mean that a smaller group of 'fit' individuals should be used for reproduction,
-    while a larger rate could mean a larger group of individuals should be used)
-  * output/return: a Python __dictionary__ containing the solution path (i.e.
-    list of n+1 vertices representing the traveling salesperson solution), the
-    distance of the solution path, and a list with the shortest distance found
-    in each generation __(see assign5.py for more specific details)__ 
+  * input: 
+      an adjacency weight matrix, 
+      maximum number of generations, 
+      population size to use, 
+      mutation rate, and 
+      exploration rate 
+        (e.g. a smaller exploration rate
+        could mean that a smaller group of 'fit' individuals should be used for reproduction,
+        while a larger rate could mean a larger group of individuals should be used)
+  * output/return: a Python __dictionary__ containing: 
+      the solution path (i.e.list of n+1 vertices representing the traveling salesperson solution), 
+      the distance of the solution path, 
+      and a list with the shortest distance found in each generation __(see assign5.py for more specific details)__ 
 
 ### Optional: Each of these functions implemented (correctly) is +10 pts
 

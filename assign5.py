@@ -5,6 +5,8 @@ your *.py file in Canvas. I will download and test your program from Canvas.
 
 import time
 import sys
+import random 
+from random import sample
 INF = sys.maxsize
 
 
@@ -28,6 +30,35 @@ def adjMatFromFile(filename):
     f.close()
     return adjmat
 
+def generate_path(path_length: int):
+    """ insert comment """
+    path = [i for i in range(path_length)]
+    random.shuffle(path)
+    return path
+
+def generate_population(pop_size: int, path_length):
+    """ Insert Comment """
+    population = []
+    sum_fitnesses = 0
+    for _ in range(pop_size):
+        path = generate_path(path_length)
+        fitness = fitness(path)
+        population.append((path, fitness))
+        sum_fitnesses += fitness
+    return population, sum_fitnesses/pop_size
+    
+
+def generate_child_path(parent1, parent2, mutation_rate):
+    """ Insert Comment """
+
+
+def fitness(path:int, adjacency_matrix):
+    """ Path length """
+    distance = 0
+    for i in range(len(path)):
+        distance += adjacency_matrix[path[i-1]][path[i]]
+    return distance
+
 
 def TSPwGenAlgo(
         g,
@@ -45,28 +76,51 @@ def TSPwGenAlgo(
     solution_path = [] # list of n+1 verts representing sequence of vertices with lowest total distance found
     solution_distance = INF # distance of final solution path, note this should include edge back to starting vert
     avg_path_each_generation = [] # store average path length path across individuals in each generation
+    path_length = len(g)
 
     # create individual members of the population
+    population = []
+    sum_fitness = 0
+    for _ in range(population_size):
+        path = generate_path(path_length)
+        fitness = fitness(path, g)
+        population.append((fitness, path))
+        sum_fitness += fitness
+    avg_path_each_generation[0] = sum_fitness / 2
 
     # initialize individuals to an initial 'solution'
 
     # loop for x number of generations (can also choose to add other early-stopping criteria)
+    for gen in range(1, max_num_generations):
 
+        # select the individuals to be used to spawn the generation, 
+        population.sort(key=lambda y: y[0])
+        number_explored = int(population_size * explore_rate)
+        parents = population[:number_explored]
+        population = []
+        sum_fitness = 0
+        # then create individuals of the new generation (using some form of crossover)
+        # allow for mutations (should be based on mutation_rate, should not happen too often)
         # calculate fitness of each individual in the population
-
+        
+        for _ in range(population_size):
+            couple = sample(parents, 2)
+            path = generate_child_path(couple[0], couple[1], mutation_rate)
+            fitness = fitness(path, g)
+            population.append((fitness, path))
+            sum_fitness += fitness
+        
         # calculate average path length across individuals in this generation
         # and store in avg_path_each_generation
+        avg_path_each_generation[gen] = sum_fitness / 2
 
-        # select the individuals to be used to spawn the generation, then create
-        # individuals of the new generation (using some form of crossover)
-
-        # allow for mutations (shuold be based on mutation_rate, should not happen too often)
-
-        # ...
+        
 
     # calculate and *verify* final solution
+    population.sort(key=lambda y: y[0])
 
     # update solution_path and solution_distance
+    solution_distance, solution_path = population[0][0], population[0][1]
 
     # ...
 
