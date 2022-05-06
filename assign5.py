@@ -1,6 +1,8 @@
 """
 For this assignment there is no automated testing. You will instead submit
 your *.py file in Canvas. I will download and test your program from Canvas.
+ref: https://arxiv.org/pdf/1203.3097.pdf used this journal article to make decision to use ox, but have since read other journal articles that disagree.
+decided to stick with ox anyways.
 """
 
 import time
@@ -48,6 +50,7 @@ def generate_child_path(parent1, parent2):
     
     crossover_point1 = len(parent1) // 3
     crossover_point2 = crossover_point1 * 2
+    #crossover_point2 = len(parent1) - crossover_point1
     child = [None] * len(parent1)
     dummy_parent = parent2.copy()
     
@@ -82,9 +85,9 @@ def generate_fitness(path:int, adjacency_matrix):
 
 def TSPwGenAlgo(
         g,
-        max_num_generations=100,
-        population_size=100,
-        mutation_rate=0.1,
+        max_num_generations=2000,
+        population_size=500,
+        mutation_rate=0.02,
         explore_rate=0.9
     ):
     """ A genetic algorithm to attempt to find an optimal solution to TSP. Returns dict with final solution path, final distance, and a list of the avg each gen. """
@@ -110,7 +113,6 @@ def TSPwGenAlgo(
         population.append((fitness, path))
         sum_fitness += fitness
     avg_path_each_generation.append(sum_fitness / population_size)
-
 
     # loop for x number of generations (can also choose to add other early-stopping criteria)
     for gen in range(1, max_num_generations):
@@ -142,13 +144,11 @@ def TSPwGenAlgo(
             sum_fitness += fitness
         
         #narrow exploration rate as generations progress
-        if explore_rate > 0.42:
+        if explore_rate > 0.22:
             explore_rate = explore_rate * .95
 
         # calculate average path length across individuals in this generation and store in avg_path_each_generation
         avg_path_each_generation.append(sum_fitness / population_size)
-
-        
 
     # calculate final solution
     population.sort(key=lambda y: y[0])
@@ -156,18 +156,19 @@ def TSPwGenAlgo(
             best_ever_solution_length = population[0][0]
             best_ever_solution = population[0][1]
 
-    #print details & graph of averages
+    #print details & save graph of averages over time
     print(f"The max gens was {max_num_generations} and the pop size was {population_size}")
     print(f"the best ever solution path was length: {best_ever_solution_length}")
     print(f"the best ever solution path was {best_ever_solution}")
     gens = list(range(max_num_generations))
     plt.plot(gens, avg_path_each_generation)
     plt.xticks(gens)
-    plt.show()
+    plt.xlabel("Generations")
+    plt.ylabel("Fitness")
+    plt.savefig("fitnessovertime.png")
 
     # update solution_path and solution_distance
     solution_distance, solution_path = population[0][0], population[0][1]
-
 
     return {
             'solution_path': solution_path,
@@ -204,7 +205,7 @@ def TSPwBandB(g):
 
 def assign05_main():
     """ Load the graph (change the filename when you're ready to test larger ones) """
-    g = adjMatFromFile("complete_graph_n08.txt")
+    g = adjMatFromFile("complete_graph_n100.txt")
 
     # Run genetic algorithm to find best solution possible
     start_time = time.time()
