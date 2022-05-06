@@ -36,8 +36,9 @@ def generate_path(path_length: int):
     random.shuffle(path)
     return path
 
+""" 
 def generate_population(pop_size: int, path_length):
-    """ Insert Comment """
+    
     population = []
     sum_fitnesses = 0
     for _ in range(pop_size):
@@ -46,14 +47,45 @@ def generate_population(pop_size: int, path_length):
         population.append((path, fitness))
         sum_fitnesses += fitness
     return population, sum_fitnesses/pop_size
+"""
+
+def generate_child_path(parent1, parent2):
+    """ Use OX to take 2 parent paths and return child path. Mutation rate cause random changes """
+    if len(parent1) < 3:
+        print("not long enough path to crossover")
+        return
+    if len(parent1) != len(parent2):
+        print("not the same length")
+        return
     
+    crossover_point1 = len(parent1) // 3
+    crossover_point2 = crossover_point1 * 2
+    child = [None] * len(parent1)
+    dummy_parent = parent2.copy()
+    
+    for i in range(crossover_point1, crossover_point2):
+        child[i] = parent1[i]
+        dummy_parent.remove(child[i])
+    
+    dummy_parent = dummy_parent[crossover_point1:] + dummy_parent[:crossover_point1]
+    
+    for j in range(crossover_point2, len(child)):
+        child[j] = dummy_parent.pop(0)
+        
+    for j in range(crossover_point1):
+        child[j] = dummy_parent.pop(0)
 
-def generate_child_path(parent1, parent2, mutation_rate):
-    """ Insert Comment """
+    return child
+    
+def mutation(path, mutation_rate):
+    for i in range(len(path)//2):
+        if random.random() < mutation_rate:
+            path[i], path[-i] = path[-i], path[i]
+    return path
 
 
-def fitness(path:int, adjacency_matrix):
-    """ Path length """
+def generate_fitness(path:int, adjacency_matrix):
+    """ Path distance """
     distance = 0
     for i in range(len(path)):
         distance += adjacency_matrix[path[i-1]][path[i]]
@@ -77,16 +109,17 @@ def TSPwGenAlgo(
     solution_distance = INF # distance of final solution path, note this should include edge back to starting vert
     avg_path_each_generation = [] # store average path length path across individuals in each generation
     path_length = len(g)
+    best_ever_solution_length = INF
 
     # create individual members of the population
     population = []
     sum_fitness = 0
     for _ in range(population_size):
         path = generate_path(path_length)
-        fitness = fitness(path, g)
+        fitness = generate_fitness(path, g)
         population.append((fitness, path))
         sum_fitness += fitness
-    avg_path_each_generation[0] = sum_fitness / 2
+    avg_path_each_generation.append(sum_fitness / population_size)
 
     # initialize individuals to an initial 'solution'
 
@@ -95,8 +128,11 @@ def TSPwGenAlgo(
 
         # select the individuals to be used to spawn the generation, 
         population.sort(key=lambda y: y[0])
+        if population[0][0] < best_ever_solution_length:
+            best_ever_solution_length = population[0][0]
         number_explored = int(population_size * explore_rate)
         parents = population[:number_explored]
+        print("parents: ", parents)
         population = []
         sum_fitness = 0
         # then create individuals of the new generation (using some form of crossover)
@@ -105,24 +141,29 @@ def TSPwGenAlgo(
         
         for _ in range(population_size):
             couple = sample(parents, 2)
-            path = generate_child_path(couple[0], couple[1], mutation_rate)
-            fitness = fitness(path, g)
+            
+            path = generate_child_path(couple[0][1], couple[1][1])
+            path = mutation(path, mutation_rate)
+            fitness = generate_fitness(path, g)
             population.append((fitness, path))
             sum_fitness += fitness
         
         # calculate average path length across individuals in this generation
         # and store in avg_path_each_generation
-        avg_path_each_generation[gen] = sum_fitness / 2
+        avg_path_each_generation.append(sum_fitness / population_size)
 
         
 
     # calculate and *verify* final solution
     population.sort(key=lambda y: y[0])
+    if population[0][0] < best_ever_solution_length:
+            best_ever_solution_length = population[0][0]
+    print(f"the best ever solution path was length {best_ever_solution_length}")
+    print("The average path length for each generation was: ", avg_path_each_generation)
 
     # update solution_path and solution_distance
     solution_distance, solution_path = population[0][0], population[0][1]
 
-    # ...
 
     return {
             'solution_path': solution_path,
