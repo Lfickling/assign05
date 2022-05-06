@@ -8,10 +8,11 @@ import sys
 import random 
 from random import sample
 INF = sys.maxsize
+import matplotlib.pyplot as plt
 
 
 def adjMatFromFile(filename):
-    """ Create an adj/weight matrix from a file with verts, neighbors, and weights. """
+    """ Create an adj/weight matrix from a file with verts, neighbors, and weights."""
     f = open(filename, "r")
     n_verts = int(f.readline())
     print(f" n_verts = {n_verts}")
@@ -31,26 +32,13 @@ def adjMatFromFile(filename):
     return adjmat
 
 def generate_path(path_length: int):
-    """ insert comment """
+    """ Generate a random path of ints 0 to path length and return path list. """
     path = [i for i in range(path_length)]
     random.shuffle(path)
     return path
 
-""" 
-def generate_population(pop_size: int, path_length):
-    
-    population = []
-    sum_fitnesses = 0
-    for _ in range(pop_size):
-        path = generate_path(path_length)
-        fitness = fitness(path)
-        population.append((path, fitness))
-        sum_fitnesses += fitness
-    return population, sum_fitnesses/pop_size
-"""
-
 def generate_child_path(parent1, parent2):
-    """ Use OX to take 2 parent paths and return child path. Mutation rate cause random changes """
+    """ Use OX to take 2 parent paths(list[int]) and return child path(list[int]). """
     if len(parent1) < 3:
         print("not long enough path to crossover")
         return
@@ -71,21 +59,21 @@ def generate_child_path(parent1, parent2):
     
     for j in range(crossover_point2, len(child)):
         child[j] = dummy_parent.pop(0)
-        
+    
     for j in range(crossover_point1):
         child[j] = dummy_parent.pop(0)
 
     return child
     
 def mutation(path, mutation_rate):
+    """ Randomly switch values at indices of a list at a rate of mutation_rate and return the list. """
     for i in range(len(path)//2):
         if random.random() < mutation_rate:
             path[i], path[-i] = path[-i], path[i]
     return path
 
-
 def generate_fitness(path:int, adjacency_matrix):
-    """ Path distance """
+    """ Calculate path distance using adjacency matrix. """
     distance = 0
     for i in range(len(path)):
         distance += adjacency_matrix[path[i-1]][path[i]]
@@ -94,12 +82,12 @@ def generate_fitness(path:int, adjacency_matrix):
 
 def TSPwGenAlgo(
         g,
-        max_num_generations=5,
-        population_size=10,
-        mutation_rate=0.01,
-        explore_rate=0.5
+        max_num_generations=100,
+        population_size=100,
+        mutation_rate=0.1,
+        explore_rate=0.9
     ):
-    """ A genetic algorithm to attempt to find an optimal solution to TSP  """
+    """ A genetic algorithm to attempt to find an optimal solution to TSP. Returns dict with final solution path, final distance, and a list of the avg each gen. """
 
     # NOTE: YOU SHOULD CHANGE THE DEFAULT PARAMETER VALUES ABOVE TO VALUES YOU
     # THINK WILL YIELD THE BEST SOLUTION FOR A GRAPH OF ~100 VERTS AND THAT CAN
@@ -110,10 +98,12 @@ def TSPwGenAlgo(
     avg_path_each_generation = [] # store average path length path across individuals in each generation
     path_length = len(g)
     best_ever_solution_length = INF
+    best_ever_solution = []
 
-    # create individual members of the population
+    # create the population 
     population = []
     sum_fitness = 0
+    #create individuals in the population in a tuple with their fitness and path
     for _ in range(population_size):
         path = generate_path(path_length)
         fitness = generate_fitness(path, g)
@@ -121,45 +111,59 @@ def TSPwGenAlgo(
         sum_fitness += fitness
     avg_path_each_generation.append(sum_fitness / population_size)
 
-    # initialize individuals to an initial 'solution'
 
     # loop for x number of generations (can also choose to add other early-stopping criteria)
     for gen in range(1, max_num_generations):
 
-        # select the individuals to be used to spawn the generation, 
+        #sort the population by the fitness of each individual
         population.sort(key=lambda y: y[0])
+        #check if there is a new best ever path and replace if neccessary 
         if population[0][0] < best_ever_solution_length:
             best_ever_solution_length = population[0][0]
+            best_ever_solution = population[0][1]
+        # select the individuals to be used to spawn the generation, using the exploration rate
         number_explored = int(population_size * explore_rate)
         parents = population[:number_explored]
-        print("parents: ", parents)
+
         population = []
         sum_fitness = 0
+
         # then create individuals of the new generation (using some form of crossover)
-        # allow for mutations (should be based on mutation_rate, should not happen too often)
-        # calculate fitness of each individual in the population
-        
         for _ in range(population_size):
+            #randomly sample 2 individuals from the last generation
             couple = sample(parents, 2)
-            
+            #crossover the genes
             path = generate_child_path(couple[0][1], couple[1][1])
+            # allow for mutations 
             path = mutation(path, mutation_rate)
+            # calculate fitness of path
             fitness = generate_fitness(path, g)
             population.append((fitness, path))
             sum_fitness += fitness
         
-        # calculate average path length across individuals in this generation
-        # and store in avg_path_each_generation
+        #narrow exploration rate as generations progress
+        if explore_rate > 0.42:
+            explore_rate = explore_rate * .95
+
+        # calculate average path length across individuals in this generation and store in avg_path_each_generation
         avg_path_each_generation.append(sum_fitness / population_size)
 
         
 
-    # calculate and *verify* final solution
+    # calculate final solution
     population.sort(key=lambda y: y[0])
     if population[0][0] < best_ever_solution_length:
             best_ever_solution_length = population[0][0]
-    print(f"the best ever solution path was length {best_ever_solution_length}")
-    print("The average path length for each generation was: ", avg_path_each_generation)
+            best_ever_solution = population[0][1]
+
+    #print details & graph of averages
+    print(f"The max gens was {max_num_generations} and the pop size was {population_size}")
+    print(f"the best ever solution path was length: {best_ever_solution_length}")
+    print(f"the best ever solution path was {best_ever_solution}")
+    gens = list(range(max_num_generations))
+    plt.plot(gens, avg_path_each_generation)
+    plt.xticks(gens)
+    plt.show()
 
     # update solution_path and solution_distance
     solution_distance, solution_path = population[0][0], population[0][1]
